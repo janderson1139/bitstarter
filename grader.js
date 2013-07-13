@@ -27,7 +27,18 @@ var loadChecks = function(checksfile) {
 };
 
 var checkHtmlFile = function(htmlfile, checksfile) {
-    $ = cheerioHtmlFile(htmlfile);
+    var $ = cheerioHtmlFile(htmlfile);
+    var checks = loadChecks(checksfile).sort();
+    var out = {};
+    for(var ii in checks) {
+        var present = $(checks[ii]).length > 0;
+        out[checks[ii]] = present;
+    }
+    return out;
+};
+
+var checkURLHTML = function(url, checksfile) {
+    var $ = cheerio.load(url);
     var checks = loadChecks(checksfile).sort();
     var out = {};
     for(var ii in checks) {
@@ -49,15 +60,16 @@ if(require.main == module) {
         .option('-f, --file <html_file>', 'Path to index.html', clone(assertFileExists), HTMLFILE_DEFAULT)
         .option('-u, --url <url_file>', 'URL to html', "NONE")
 	.parse(process.argv);
+    console.log(program.url);
     if (program.url == "NONE"){
 	var checkJson = checkHtmlFile(program.file, program.checks);
 	}
     else{
 	rest.get(program.url).on('complete', function(result) {
-	    pagehtml = result;
-	    }
+        pagehtml = result;
+	}
 	);
-	var checkJson = checkHtmlFile(pagehtml, program.checks);
+	var checkJson = checkURLHTML(pagehtml, program.checks);
 	}
     var checkJson = checkHtmlFile(program.file, program.checks);
     var outJson = JSON.stringify(checkJson, null, 4);
